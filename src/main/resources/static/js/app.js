@@ -1,7 +1,7 @@
 // SnipLink - Frontend JavaScript Utilities
 
 // API Base URL
-const API_BASE_URL = window.location.origin;
+const API_BASE_URL = window.SNIPLINK_API_URL || window.location.origin;
 
 // Get JWT Token from localStorage
 function getToken() {
@@ -25,7 +25,7 @@ function requireAuth() {
 // Make authenticated API request
 async function apiRequest(url, options = {}) {
     const token = getToken();
-    
+
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ async function apiRequest(url, options = {}) {
 
     try {
         const response = await fetch(`${API_BASE_URL}${url}`, mergedOptions);
-        
+
         // Handle unauthorized
         if (response.status === 401) {
             localStorage.removeItem('token');
@@ -95,7 +95,7 @@ function copyToClipboard(text) {
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        
+
         try {
             document.execCommand('copy');
             textArea.remove();
@@ -125,9 +125,9 @@ function showNotification(message, type = 'info') {
         animation: slideIn 0.3s ease;
     `;
     notification.textContent = message;
-    
+
     document.body.appendChild(notification);
-    
+
     // Remove after 3 seconds
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease';
