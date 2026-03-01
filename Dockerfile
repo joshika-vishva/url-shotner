@@ -8,6 +8,8 @@ RUN mvn clean package -DskipTests
 # Run stage
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/target/sniplink-1.0.0.jar app.jar
+# Copy any jar found in target to app.jar
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Use shell form for CMD
+CMD java -jar app.jar
