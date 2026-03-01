@@ -6,11 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SnipLink</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css?v=2">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
+    <div class="bg-mesh">
+        <div class="mesh-blob blob-1"></div>
+        <div class="mesh-blob blob-2"></div>
+        <div class="mesh-blob blob-3"></div>
+    </div>
     <div class="header">
         <a href="/" class="logo" style="text-decoration: none;">⚡ SnipLink</a>
         <div class="nav-links">
@@ -30,15 +35,15 @@
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
                 <div class="stat-label">Total Links</div>
-                <div class="stat-value" id="totalLinks">0</div>
+                <div class="stat-value shimmer" id="totalLinks">0</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Total Clicks</div>
-                <div class="stat-value" id="totalClicks">0</div>
+                <div class="stat-value shimmer" id="totalClicks">0</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Active Deployments</div>
-                <div class="stat-value" id="activeLinks">0</div>
+                <div class="stat-value shimmer" id="activeLinks">0</div>
             </div>
         </div>
 
@@ -88,6 +93,16 @@
 
         document.getElementById('userDisplay').textContent = username;
 
+        // Floating Header on Scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 20) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
         let clicksChart = null;
 
         async function loadDashboard() {
@@ -99,9 +114,17 @@
 
                 if (result.success) {
                     const data = result.data;
-                    document.getElementById('totalLinks').textContent = data.totalLinks.toLocaleString();
-                    document.getElementById('totalClicks').textContent = data.totalClicks.toLocaleString();
-                    document.getElementById('activeLinks').textContent = data.activeLinks.toLocaleString();
+                    const totalLinksEl = document.getElementById('totalLinks');
+                    const totalClicksEl = document.getElementById('totalClicks');
+                    const activeLinksEl = document.getElementById('activeLinks');
+
+                    // Keep shimmer for at least 800ms for visual effect
+                    setTimeout(() => {
+                        totalLinksEl.textContent = data.totalLinks.toLocaleString();
+                        totalClicksEl.textContent = data.totalClicks.toLocaleString();
+                        activeLinksEl.textContent = data.activeLinks.toLocaleString();
+                        [totalLinksEl, totalClicksEl, activeLinksEl].forEach(el => el.classList.remove('shimmer'));
+                    }, 800);
 
                     renderChart(data.dailyClicks);
                 }

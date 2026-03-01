@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SnipLink - AI-Powered URL Shortener</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css?v=2">
 </head>
 
 <body>
     <div class="bg-mesh">
         <div class="mesh-blob blob-1"></div>
         <div class="mesh-blob blob-2"></div>
+        <div class="mesh-blob blob-3"></div>
     </div>
 
     <div class="header">
@@ -114,6 +115,16 @@
                 <a href="/dashboard.html" class="nav-link">Dashboard</a>
             `;
         }
+
+        // Floating Header on Scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 20) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
 
         document.getElementById('shortenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
