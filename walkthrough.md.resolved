@@ -1,1274 +1,649 @@
-# CSS Compatibility Fix Walkthrough
+## UI "WOW" Enhancements
 
-I've resolved the CSS compatibility issue in [styles.css](file:///c:/Users/Vishnu%20Varthan/Downloads/sniplink/sniplink/src/main/resources/static/css/styles.css) where a `-webkit` prefixed property was used without its standard counterpart.
+I've elevated the design with premium visual effects:
 
-## Changes Made
+- **Animated Hero Text**: The main heading now features a subtle, shifting multi-color gradient (`#ffffff` to `#a5b4fc`).
+- **Floating Animation**: Added a gentle vertical float to the hero section for a more dynamic, modern feel.
+- **Enhanced Glassmorphism**: Increased card blur from `24px` to `40px` and saturation to `230%` for a high-end "Apple-style" glass effect.
+- **Interactive Glows**: Added smoother transitions and subtle primary glows on card hover.
+- **Centered Collapsible Options**: The "Advanced Options" toggle is now centered, and the section is hidden by default, sliding open smoothly when clicked.
+- **Git Versioning**: All changes have been pushed to [joshika-vishva/url-shotner](https://github.com/joshika-vishva/url-shotner.git).
+- **Deployment Ready**: Added [Dockerfile](file:///c:/Users/Vishnu%20Varthan/Downloads/sniplink/sniplink/Dockerfile), [docker-compose.yml](file:///c:/Users/Vishnu%20Varthan/Downloads/sniplink/sniplink/docker-compose.yml), and [Procfile](file:///c:/Users/Vishnu%20Varthan/Downloads/sniplink/sniplink/Procfile) for one-click deployment to cloud platforms.
 
-### UI Aesthetics
+## Deployment Instructions
 
-#### [styles.css](file:///c:/Users/Vishnu%20Varthan/Downloads/sniplink/sniplink/src/main/resources/static/css/styles.css)
+I've made the app "Ready for Cloud":
 
-Added `background-clip: text;` to the `.hero h1` selector. This ensures that the gradient background is correctly clipped to the text content in all modern browsers, following the CSS standard.
+### 1. Docker Deployment
+Run everything locally in a production-like environment with:
+```bash
+docker-compose up -d
+```
 
-```diff:styles.css
-:root {
-    --primary: #6366f1;
-    --primary-glow: rgba(99, 102, 241, 0.5);
-    --secondary: #8b5cf6;
-    --secondary-glow: rgba(139, 92, 246, 0.5);
-    --bg-darker: #020617;
-    --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --glass-bg: rgba(255, 255, 255, 0.03);
-    --glass-border: rgba(255, 255, 255, 0.08);
+### 2. Cloud Hosting (Render / Railway / Heroku)
+The repo is now compatible with major hosting providers.
+
+### 🚁 Hybrid Deployment (Vercel + Render)
+You can now host the frontend on Vercel and the backend on Render:
+
+1.  **Vercel Setup**:
+    - Connect your GitHub repo to Vercel.
+    - Set an Environment Variable: `SNIPLINK_API_URL` to your **Render URL** (e.g., `https://sniplink-api.onrender.com`).
+2.  **Render Setup**:
+    - Ensure your Render backend has the Environment Variable: `CORS_ORIGINS` set to your **Vercel URL** (e.g., `https://sniplink-frontend.vercel.app`).
+
+```diff:app.js
+// SnipLink - Frontend JavaScript Utilities
+
+// API Base URL
+const API_BASE_URL = window.location.origin;
+
+// Get JWT Token from localStorage
+function getToken() {
+    return localStorage.getItem('token');
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+// Check if user is authenticated
+function isAuthenticated() {
+    return !!getToken();
 }
 
-@keyframes mesh-float {
-    0% {
-        transform: translate(0, 0) scale(1);
+// Redirect to login if not authenticated
+function requireAuth() {
+    if (!isAuthenticated()) {
+        window.location.href = '/login.html';
+        return false;
     }
-
-    33% {
-        transform: translate(5%, 5%) scale(1.1);
-    }
-
-    66% {
-        transform: translate(-5%, 8%) scale(0.9);
-    }
-
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
+    return true;
 }
 
-body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    background: var(--bg-darker);
-    color: var(--text-primary);
-    min-height: 100vh;
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-}
+// Make authenticated API request
+async function apiRequest(url, options = {}) {
+    const token = getToken();
+    
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+    };
 
-.bg-mesh {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    filter: blur(100px);
-    opacity: 0.4;
-}
+    const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+            ...defaultOptions.headers,
+            ...options.headers
+        }
+    };
 
-.mesh-blob {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    animation: mesh-float 20s infinite ease-in-out;
-}
+    try {
+        const response = await fetch(`${API_BASE_URL}${url}`, mergedOptions);
+        
+        // Handle unauthorized
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = '/login.html';
+            return null;
+        }
 
-.blob-1 {
-    width: 600px;
-    height: 600px;
-    background: var(--primary-glow);
-    top: -10%;
-    right: -10%;
-}
-
-.blob-2 {
-    width: 500px;
-    height: 500px;
-    background: var(--secondary-glow);
-    bottom: -10%;
-    left: -10%;
-    animation-delay: -5s;
-}
-
-/* Next-Gen Glass Card */
-.glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid var(--glass-border);
-    border-radius: 32px;
-    padding: 3rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.glass-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
-    pointer-events: none;
-}
-
-.glass-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-}
-
-/* Header */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2rem 2.5rem;
-    margin-bottom: 2rem;
-}
-
-.logo {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #818cf8, #c084fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.nav-links {
-    display: flex;
-    gap: 1.5rem;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-}
-
-.btn-outline {
-    background: transparent;
-    border: 2px solid var(--primary);
-    color: var(--primary);
-}
-
-.btn-outline:hover {
-    background: var(--primary);
-    color: white;
-}
-
-.btn-danger {
-    background: var(--danger);
-    color: white;
-}
-
-.btn-success {
-    background: var(--success);
-    color: white;
-}
-
-/* Hero Section */
-.hero {
-    text-align: center;
-    margin: 8rem 0 6rem 0;
-}
-
-.hero h1 {
-    font-size: 5rem;
-    font-weight: 900;
-    margin-bottom: 2rem;
-    letter-spacing: -0.05em;
-    background: linear-gradient(to bottom, #ffffff 40%, rgba(255, 255, 255, 0.4) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1;
-}
-
-.hero p {
-    font-size: 1.4rem;
-    color: var(--text-secondary);
-    margin: 0 auto 3rem auto;
-    max-width: 600px;
-    letter-spacing: -0.02em;
-    font-weight: 500;
-}
-
-/* URL Shortener Form */
-.url-form {
-    margin-bottom: 4rem;
-}
-
-.input-group {
-    display: flex;
-    gap: 1.25rem;
-    margin-bottom: 2rem;
-}
-
-@keyframes shimmer {
-    from {
-        transform: translateX(-100%);
-    }
-
-    to {
-        transform: translateX(100%);
+        return await response.json();
+    } catch (error) {
+        console.error('API Request Error:', error);
+        throw error;
     }
 }
 
-.btn-primary {
-    padding: 1.4rem 2.5rem;
-    background: #ffffff;
-    color: #000000;
-    border: none;
-    border-radius: 18px;
-    font-weight: 800;
-    font-size: 1.1rem;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+// Format date
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
 }
 
-.btn-primary::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-    animation: shimmer 3s infinite;
+// Format datetime
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
-.btn-primary:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
-}
-
-.btn-ai {
-    padding: 1.2rem 2.2rem;
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 18px;
-    color: #a5b4fc;
-    font-weight: 700;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-}
-
-.btn-ai:hover {
-    background: rgba(99, 102, 241, 0.2);
-    border-color: var(--primary);
-    color: #ffffff;
-    transform: translateY(-2px);
-}
-
-.input-large {
-    flex: 1;
-    padding: 1.4rem 1.8rem;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    color: #ffffff;
-    font-size: 1.1rem;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.input-large:focus {
-    outline: none;
-    border-color: rgba(99, 102, 241, 0.5);
-    background: rgba(0, 0, 0, 0.6);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
-/* Advanced Options Collapsible */
-.advanced-toggle-wrapper {
-    display: flex;
-    justify-content: flex-start;
-}
-
-.advanced-toggle {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    padding: 0.5rem 0;
-    transition: color 0.3s ease;
-}
-
-.advanced-toggle:hover {
-    color: var(--primary);
-}
-
-.toggle-icon {
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.advanced-toggle.active .toggle-icon {
-    transform: rotate(180deg);
-}
-
-.advanced-options-container {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, margin-top 0.4s ease;
-    opacity: 0;
-}
-
-.advanced-options-container.show {
-    max-height: 500px;
-    /* Adjust based on content */
-    opacity: 1;
-    margin-top: 1rem;
-}
-
-.advanced-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.25rem;
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.form-group {
-    margin-bottom: 0.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.form-control {
-    width: 100%;
-    padding: 0.75rem;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    color: var(--text-primary);
-    font-size: 1rem;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-
-/* Feature Cards */
-.features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 3rem;
-    margin-top: 8rem;
-    margin-bottom: 8rem;
-}
-
-.feature-card {
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 40px;
-    padding: 5rem 3rem;
-    text-align: center;
-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.feature-card:hover {
-    transform: translateY(-15px) scale(1.03);
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(99, 102, 241, 0.3);
-    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
-}
-
-.feature-icon {
-    font-size: 4rem;
-    margin-bottom: 2.5rem;
-    display: block;
-}
-
-.feature-card h3 {
-    font-size: 1.75rem;
-    font-weight: 900;
-    margin-bottom: 1rem;
-    letter-spacing: -0.03em;
-}
-
-.feature-card p {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    line-height: 1.6;
-    font-weight: 500;
-}
-
-/* Dashboard Stats */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    border-radius: 20px;
-    padding: 2rem;
-    color: white;
-}
-
-.stat-value {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-}
-
-.stat-label {
-    font-size: 1rem;
-    opacity: 0.9;
-}
-
-/* Table */
-.table-container {
-    overflow-x: auto;
-    margin-top: 2rem;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-thead {
-    background: var(--glass-bg);
-}
-
-th,
-td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--glass-border);
-}
-
-th {
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    font-size: 0.85rem;
-}
-
-td {
-    color: var(--text-primary);
-}
-
-.badge {
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-.badge-success {
-    background: rgba(16, 185, 129, 0.2);
-    color: var(--success);
-}
-
-.badge-danger {
-    background: rgba(239, 68, 68, 0.2);
-    color: var(--danger);
-}
-
-.badge-warning {
-    background: rgba(245, 158, 11, 0.2);
-    color: var(--warning);
-}
-
-/* Actions */
-.actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.icon-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.icon-btn:hover {
-    background: var(--glass-bg);
-    color: var(--primary);
-}
-
-/* Chart Container */
-.chart-container {
-    margin-top: 2rem;
-    padding: 2rem;
-    background: var(--glass-bg);
-    border-radius: 20px;
-    border: 1px solid var(--glass-border);
-}
-
-/* Auth Forms */
-.auth-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.auth-card {
-    width: 100%;
-    max-width: 450px;
-}
-
-.auth-card h2 {
-    text-align: center;
-    margin-bottom: 2rem;
-    font-size: 2rem;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.auth-link {
-    text-align: center;
-    margin-top: 1.5rem;
-    color: var(--text-secondary);
-}
-
-.auth-link a {
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.auth-link a:hover {
-    text-decoration: underline;
-}
-
-/* Alert */
-.alert {
-    padding: 1rem;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-}
-
-.alert-success {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .hero h1 {
-        font-size: 2.5rem;
-    }
-
-    .input-group {
-        flex-direction: column;
-    }
-
-    .header {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .nav-links {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .btn {
-        width: 100%;
+// Copy to clipboard
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            textArea.remove();
+            return Promise.resolve();
+        } catch (error) {
+            textArea.remove();
+            return Promise.reject(error);
+        }
     }
 }
 
-/* Loading Spinner */
-.spinner {
-    border: 3px solid var(--glass-border);
-    border-top: 3px solid var(--primary);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 2rem auto;
+// Show notification/toast
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#6366f1'};
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Validate URL format
+function isValidURL(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+// Debounce function for input events
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Format large numbers (e.g., 1000 -> 1K)
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+}
+
+// Export functions for use in other scripts
+window.SnipLink = {
+    getToken,
+    isAuthenticated,
+    requireAuth,
+    apiRequest,
+    formatDate,
+    formatDateTime,
+    copyToClipboard,
+    showNotification,
+    isValidURL,
+    debounce,
+    formatNumber
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('SnipLink utilities loaded');
+});
+===
+// SnipLink - Frontend JavaScript Utilities
+
+// API Base URL
+const API_BASE_URL = window.SNIPLINK_API_URL || window.location.origin;
+
+// Get JWT Token from localStorage
+function getToken() {
+    return localStorage.getItem('token');
+}
+
+// Check if user is authenticated
+function isAuthenticated() {
+    return !!getToken();
+}
+
+// Redirect to login if not authenticated
+function requireAuth() {
+    if (!isAuthenticated()) {
+        window.location.href = '/login.html';
+        return false;
+    }
+    return true;
+}
+
+// Make authenticated API request
+async function apiRequest(url, options = {}) {
+    const token = getToken();
+    
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+    };
+
+    const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+            ...defaultOptions.headers,
+            ...options.headers
+        }
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}${url}`, mergedOptions);
+        
+        // Handle unauthorized
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = '/login.html';
+            return null;
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('API Request Error:', error);
+        throw error;
+    }
+}
+
+// Format date
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+// Format datetime
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Copy to clipboard
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            textArea.remove();
+            return Promise.resolve();
+        } catch (error) {
+            textArea.remove();
+            return Promise.reject(error);
+        }
+    }
+}
+
+// Show notification/toast
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#6366f1'};
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Validate URL format
+function isValidURL(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+// Debounce function for input events
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Format large numbers (e.g., 1000 -> 1K)
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+}
+
+// Export functions for use in other scripts
+window.SnipLink = {
+    getToken,
+    isAuthenticated,
+    requireAuth,
+    apiRequest,
+    formatDate,
+    formatDateTime,
+    copyToClipboard,
+    showNotification,
+    isValidURL,
+    debounce,
+    formatNumber
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('SnipLink utilities loaded');
+});
+```
+```diff:SecurityConfig.java
+package com.sniplink.config;
+
+import com.sniplink.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
-    100% {
-        transform: rotate(360deg);
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**", "/api/shorten").permitAll()
+                        .requestMatchers("/{shortCode}").permitAll()
+                        .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/password.html",
+                                       "/css/**", "/js/**", "/**/*.css", "/**/*.js", "/**/*.html").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:8080", "http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
 ===
-:root {
-    --primary: #6366f1;
-    --primary-glow: rgba(99, 102, 241, 0.5);
-    --secondary: #8b5cf6;
-    --secondary-glow: rgba(139, 92, 246, 0.5);
-    --bg-darker: #020617;
-    --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --glass-bg: rgba(255, 255, 255, 0.03);
-    --glass-border: rgba(255, 255, 255, 0.08);
-}
+package com.sniplink.config;
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
+import com.sniplink.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-@keyframes mesh-float {
-    0% {
-        transform: translate(0, 0) scale(1);
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Value("${cors.allowed-origins:http://localhost:8080,http://localhost:3000}")
+    private String allowedOrigins;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
-    33% {
-        transform: translate(5%, 5%) scale(1.1);
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 
-    66% {
-        transform: translate(-5%, 8%) scale(0.9);
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
     }
 
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-}
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**", "/api/shorten").permitAll()
+                        .requestMatchers("/{shortCode}").permitAll()
+                        .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/password.html",
+                                       "/css/**", "/js/**", "/**/*.css", "/**/*.js", "/**/*.html").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    background: var(--bg-darker);
-    color: var(--text-primary);
-    min-height: 100vh;
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-}
-
-.bg-mesh {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    filter: blur(100px);
-    opacity: 0.4;
-}
-
-.mesh-blob {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    animation: mesh-float 20s infinite ease-in-out;
-}
-
-.blob-1 {
-    width: 600px;
-    height: 600px;
-    background: var(--primary-glow);
-    top: -10%;
-    right: -10%;
-}
-
-.blob-2 {
-    width: 500px;
-    height: 500px;
-    background: var(--secondary-glow);
-    bottom: -10%;
-    left: -10%;
-    animation-delay: -5s;
-}
-
-/* Next-Gen Glass Card */
-.glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid var(--glass-border);
-    border-radius: 32px;
-    padding: 3rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.glass-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
-    pointer-events: none;
-}
-
-.glass-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-}
-
-/* Header */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2rem 2.5rem;
-    margin-bottom: 2rem;
-}
-
-.logo {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #818cf8, #c084fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.nav-links {
-    display: flex;
-    gap: 1.5rem;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-}
-
-.btn-outline {
-    background: transparent;
-    border: 2px solid var(--primary);
-    color: var(--primary);
-}
-
-.btn-outline:hover {
-    background: var(--primary);
-    color: white;
-}
-
-.btn-danger {
-    background: var(--danger);
-    color: white;
-}
-
-.btn-success {
-    background: var(--success);
-    color: white;
-}
-
-/* Hero Section */
-.hero {
-    text-align: center;
-    margin: 8rem 0 6rem 0;
-}
-
-.hero h1 {
-    font-size: 5rem;
-    font-weight: 900;
-    margin-bottom: 2rem;
-    letter-spacing: -0.05em;
-    background: linear-gradient(to bottom, #ffffff 40%, rgba(255, 255, 255, 0.4) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1;
-}
-
-.hero p {
-    font-size: 1.4rem;
-    color: var(--text-secondary);
-    margin: 0 auto 3rem auto;
-    max-width: 600px;
-    letter-spacing: -0.02em;
-    font-weight: 500;
-}
-
-/* URL Shortener Form */
-.url-form {
-    margin-bottom: 4rem;
-}
-
-.input-group {
-    display: flex;
-    gap: 1.25rem;
-    margin-bottom: 2rem;
-}
-
-@keyframes shimmer {
-    from {
-        transform: translateX(-100%);
+        return http.build();
     }
 
-    to {
-        transform: translateX(100%);
-    }
-}
-
-.btn-primary {
-    padding: 1.4rem 2.5rem;
-    background: #ffffff;
-    color: #000000;
-    border: none;
-    border-radius: 18px;
-    font-weight: 800;
-    font-size: 1.1rem;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-}
-
-.btn-primary::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-    animation: shimmer 3s infinite;
-}
-
-.btn-primary:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
-}
-
-.btn-ai {
-    padding: 1.2rem 2.2rem;
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 18px;
-    color: #a5b4fc;
-    font-weight: 700;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-}
-
-.btn-ai:hover {
-    background: rgba(99, 102, 241, 0.2);
-    border-color: var(--primary);
-    color: #ffffff;
-    transform: translateY(-2px);
-}
-
-.input-large {
-    flex: 1;
-    padding: 1.4rem 1.8rem;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    color: #ffffff;
-    font-size: 1.1rem;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.input-large:focus {
-    outline: none;
-    border-color: rgba(99, 102, 241, 0.5);
-    background: rgba(0, 0, 0, 0.6);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
-/* Advanced Options Collapsible */
-.advanced-toggle-wrapper {
-    display: flex;
-    justify-content: flex-start;
-}
-
-.advanced-toggle {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    padding: 0.5rem 0;
-    transition: color 0.3s ease;
-}
-
-.advanced-toggle:hover {
-    color: var(--primary);
-}
-
-.toggle-icon {
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.advanced-toggle.active .toggle-icon {
-    transform: rotate(180deg);
-}
-
-.advanced-options-container {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, margin-top 0.4s ease;
-    opacity: 0;
-}
-
-.advanced-options-container.show {
-    max-height: 500px;
-    /* Adjust based on content */
-    opacity: 1;
-    margin-top: 1rem;
-}
-
-.advanced-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.25rem;
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.form-group {
-    margin-bottom: 0.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.form-control {
-    width: 100%;
-    padding: 0.75rem;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    color: var(--text-primary);
-    font-size: 1rem;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-
-/* Feature Cards */
-.features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 3rem;
-    margin-top: 8rem;
-    margin-bottom: 8rem;
-}
-
-.feature-card {
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 40px;
-    padding: 5rem 3rem;
-    text-align: center;
-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.feature-card:hover {
-    transform: translateY(-15px) scale(1.03);
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(99, 102, 241, 0.3);
-    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
-}
-
-.feature-icon {
-    font-size: 4rem;
-    margin-bottom: 2.5rem;
-    display: block;
-}
-
-.feature-card h3 {
-    font-size: 1.75rem;
-    font-weight: 900;
-    margin-bottom: 1rem;
-    letter-spacing: -0.03em;
-}
-
-.feature-card p {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    line-height: 1.6;
-    font-weight: 500;
-}
-
-/* Dashboard Stats */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    border-radius: 20px;
-    padding: 2rem;
-    color: white;
-}
-
-.stat-value {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-}
-
-.stat-label {
-    font-size: 1rem;
-    opacity: 0.9;
-}
-
-/* Table */
-.table-container {
-    overflow-x: auto;
-    margin-top: 2rem;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-thead {
-    background: var(--glass-bg);
-}
-
-th,
-td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--glass-border);
-}
-
-th {
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    font-size: 0.85rem;
-}
-
-td {
-    color: var(--text-primary);
-}
-
-.badge {
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-.badge-success {
-    background: rgba(16, 185, 129, 0.2);
-    color: var(--success);
-}
-
-.badge-danger {
-    background: rgba(239, 68, 68, 0.2);
-    color: var(--danger);
-}
-
-.badge-warning {
-    background: rgba(245, 158, 11, 0.2);
-    color: var(--warning);
-}
-
-/* Actions */
-.actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.icon-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.icon-btn:hover {
-    background: var(--glass-bg);
-    color: var(--primary);
-}
-
-/* Chart Container */
-.chart-container {
-    margin-top: 2rem;
-    padding: 2rem;
-    background: var(--glass-bg);
-    border-radius: 20px;
-    border: 1px solid var(--glass-border);
-}
-
-/* Auth Forms */
-.auth-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.auth-card {
-    width: 100%;
-    max-width: 450px;
-}
-
-.auth-card h2 {
-    text-align: center;
-    margin-bottom: 2rem;
-    font-size: 2rem;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.auth-link {
-    text-align: center;
-    margin-top: 1.5rem;
-    color: var(--text-secondary);
-}
-
-.auth-link a {
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.auth-link a:hover {
-    text-decoration: underline;
-}
-
-/* Alert */
-.alert {
-    padding: 1rem;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-}
-
-.alert-success {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .hero h1 {
-        font-size: 2.5rem;
-    }
-
-    .input-group {
-        flex-direction: column;
-    }
-
-    .header {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .nav-links {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .btn {
-        width: 100%;
-    }
-}
-
-/* Loading Spinner */
-.spinner {
-    border: 3px solid var(--glass-border);
-    border-top: 3px solid var(--primary);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 2rem auto;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
 ```

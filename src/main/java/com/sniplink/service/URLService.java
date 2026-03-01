@@ -35,8 +35,8 @@ public class URLService {
     @Autowired
     private AIService aiService;
 
-    @Value("${server.port:8080}")
-    private String serverPort;
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     @Transactional
     public URLResponse shortenURL(ShortenRequest request) {
@@ -179,7 +179,7 @@ public class URLService {
                 .id(url.getId())
                 .originalUrl(url.getOriginalUrl())
                 .shortCode(url.getShortCode())
-                .shortUrl("http://localhost:" + serverPort + "/" + url.getShortCode())
+                .shortUrl(baseUrl + "/" + url.getShortCode())
                 .createdAt(url.getCreatedAt())
                 .expiresAt(url.getExpiresAt())
                 .clickCount(url.getClickCount())
