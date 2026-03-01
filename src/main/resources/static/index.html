@@ -7,6 +7,11 @@
     <title>SnipLink - AI-Powered URL Shortener</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/styles.css?v=2">
+    <script>
+        // Set API_BASE_URL for hybrid deployment
+        // Set this to your Render backend URL during deployment
+        window.SNIPLINK_API_URL = ''; 
+    </script>
 </head>
 
 <body>
@@ -165,7 +170,8 @@
             console.log('Sending data:', data);
 
             try {
-                const response = await fetch('/api/shorten', {
+                const apiUrl = (window.SNIPLINK_API_URL || '') + '/api/shorten';
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
