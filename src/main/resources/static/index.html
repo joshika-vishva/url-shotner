@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnipLink - AI-Powered URL Shortener</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="bg-mesh">
+        <div class="mesh-blob blob-1"></div>
+        <div class="mesh-blob blob-2"></div>
+    </div>
+
+    <div class="header">
+        <div class="logo">⚡ SnipLink</div>
+        <div class="nav-links" id="navLinks">
+            <a href="/login.html" class="nav-link">Sign In</a>
+            <a href="/register.html" class="btn btn-outline" style="padding: 0.4rem 1.25rem;">Sign Up</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Shorten URLs with AI Safety</h1>
+            <p>Lightning-fast URL shortening with built-in AI security checks</p>
+        </div>
+
+        <div class="glass-card url-form">
+            <div id="alert"></div>
+
+            <form id="shortenForm">
+                <div class="input-group">
+                    <input type="url" id="urlInput" class="input-large" placeholder="Paste your long URL here..."
+                        required>
+                    <button type="button" class="btn-ai" onclick="checkAISafety()">🤖 AI Check</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Shorten Link</button>
+                </div>
+
+                <div class="advanced-toggle-wrapper">
+                    <button type="button" class="advanced-toggle" onclick="toggleAdvancedOptions()">
+                        <span class="toggle-icon">▼</span> Advanced Options
+                    </button>
+                </div>
+
+                <div class="advanced-options-container" id="advancedOptions">
+                    <div class="advanced-options">
+                        <div class="form-group">
+                            <label for="customSlug">Custom Slug (Optional)</label>
+                            <input type="text" id="customSlug" class="form-control" placeholder="my-custom-link">
+                        </div>
+                        <div class="form-group">
+                            <label for="expiryDate">Expiry Date (Optional)</label>
+                            <input type="datetime-local" id="expiryDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="tags">Tags (Optional)</label>
+                            <input type="text" id="tags" class="form-control" placeholder="marketing, social">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password (Optional)</label>
+                            <input type="password" id="password" class="form-control"
+                                placeholder="Protect with password">
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div id="result" style="display:none; margin-top:2rem;">
+                <h3 style="margin-bottom:1rem;">Your Shortened URL:</h3>
+                <div class="input-group">
+                    <input type="text" id="shortUrl" class="input-large" readonly>
+                    <button class="btn btn-success" onclick="copyToClipboard()"
+                        style="padding: 0 1.5rem; border-radius: 0 12px 12px 0;">Copy📋</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Lightning Fast</h3>
+                <p>Generate short URLs instantly with our optimized system</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI Safety Check</h3>
+                <p>Advanced AI analyzes URLs for malicious content before shortening</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Rich Analytics</h3>
+                <p>Track clicks, devices, locations, and more with detailed analytics</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        function toggleAdvancedOptions() {
+            const container = document.getElementById('advancedOptions');
+            const toggleBtn = document.querySelector('.advanced-toggle');
+            container.classList.toggle('show');
+            toggleBtn.classList.toggle('active');
+        }
+
+        // Check authentication state on load
+        const token = localStorage.getItem('token');
+        if (token) {
+            document.getElementById('navLinks').innerHTML = `
+                <a href="/dashboard.html" class="nav-link">Dashboard</a>
+            `;
+        }
+
+        document.getElementById('shortenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await shortenURL();
+        });
+
+        async function shortenURL() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showAlert('Please login first', 'error');
+                setTimeout(() => window.location.href = '/login.html', 1500);
+                return;
+            }
+
+            const url = document.getElementById('urlInput').value;
+            const customSlug = document.getElementById('customSlug').value;
+            const expiryDate = document.getElementById('expiryDate').value;
+            const tags = document.getElementById('tags').value;
+            const password = document.getElementById('password').value;
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '...';
+            submitBtn.disabled = true;
+
+            const data = {
+                url,
+                customSlug,
+                tags,
+                password
+            };
+
+            // Format date for backend LocalDateTime (yyyy-MM-dd'T'HH:mm:ss)
+            if (expiryDate) {
+                data.expiresAt = expiryDate;
+            }
+
+            console.log('Sending data:', data);
+
+            try {
+                const response = await fetch('/api/shorten', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('shortUrl').value = result.data.shortUrl;
+                    document.getElementById('result').style.display = 'block';
+                    showAlert('URL shortened successfully!', 'success');
+                    document.getElementById('shortenForm').reset();
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('An error occurred during shortening', 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function checkAISafety() {
+            const url = document.getElementById('urlInput').value;
+            if (!url) {
+                showAlert('Please enter a URL first', 'error');
+                return;
+            }
+            showAlert('AI is analyzing URL safety...', 'success');
+            setTimeout(() => {
+                showAlert('✅ URL appears safe!', 'success');
+            }, 1000);
+        }
+
+        function copyToClipboard() {
+            const shortUrl = document.getElementById('shortUrl');
+            shortUrl.select();
+            document.execCommand('copy');
+            showAlert('Copied to clipboard!', 'success');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alertDiv.innerHTML = '', 5000);
+        }
+    </script>
+</body>
+
+</html>

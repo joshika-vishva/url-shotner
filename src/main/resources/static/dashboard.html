@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SnipLink</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="header">
+        <a href="/" class="logo" style="text-decoration: none;">⚡ SnipLink</a>
+        <div class="nav-links">
+            <span id="userDisplay" style="color: var(--text-secondary); font-weight: 600;"></span>
+            <a href="/index.html" class="btn btn-primary">Create Link</a>
+            <button class="btn btn-outline" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div style="margin-bottom: 3rem; text-align: center;">
+            <h1 style="font-size: 2.5rem; letter-spacing: -0.02em;">Analytics Dashboard</h1>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem;">Monitor your link performance metrics with AI
+                precision.</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">Total Links</div>
+                <div class="stat-value" id="totalLinks">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Clicks</div>
+                <div class="stat-value" id="totalClicks">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Deployments</div>
+                <div class="stat-value" id="activeLinks">0</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.25rem;">Traffic Overview</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Click volume trends over the last 7 days.
+                </p>
+            </div>
+            <div style="height: 300px; width: 100%;">
+                <canvas id="clicksChart"></canvas>
+            </div>
+        </div>
+
+        <div class="glass-card table-container" style="padding: 0; overflow: hidden; margin-top: 3rem;">
+            <div
+                style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.02);">
+                <h3 style="margin: 0; font-size: 1.25rem;">Active Links</h3>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Alias</th>
+                            <th>Target Destination</th>
+                            <th>Volume</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th style="text-align: right;">Options</th>
+                        </tr>
+                    </thead>
+                    <tbody id="urlsTable">
+                        <!-- Data populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        document.getElementById('userDisplay').textContent = username;
+
+        let clicksChart = null;
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/analytics/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const data = result.data;
+                    document.getElementById('totalLinks').textContent = data.totalLinks.toLocaleString();
+                    document.getElementById('totalClicks').textContent = data.totalClicks.toLocaleString();
+                    document.getElementById('activeLinks').textContent = data.activeLinks.toLocaleString();
+
+                    renderChart(data.dailyClicks);
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard', error);
+            }
+
+            loadURLs();
+        }
+
+        async function loadURLs() {
+            try {
+                const response = await fetch('/api/user/urls', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const tbody = document.getElementById('urlsTable');
+                    tbody.innerHTML = '';
+
+                    if (result.data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">No link deployments found.</td></tr>';
+                        return;
+                    }
+
+                    result.data.forEach(url => {
+                        const fullHost = window.location.origin;
+                        const fullShortUrl = `${fullHost}/${url.shortCode}`;
+
+                        const row = `
+                            <tr>
+                                <td><a href="/${url.shortCode}" target="_blank" class="link-highlight">${url.shortCode}</a></td>
+                                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);" title="${url.originalUrl}">${url.originalUrl}</td>
+                                <td>${url.clickCount.toLocaleString()}</td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <span class="badge ${url.isActive ? 'badge-success' : 'badge-danger'}">
+                                            ${url.isActive ? 'Live' : 'Inactive'}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td style="color: var(--text-secondary);">${new Date(url.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                                <td>
+                                    <div class="actions" style="justify-content: flex-end;">
+                                        <button class="icon-btn" onclick="copyURL('${fullShortUrl}')" title="Copy to clipboard">
+                                            <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                                        </button>
+                                        <button class="icon-btn delete" onclick="deleteURL(${url.id})" title="Revoke link">
+                                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load URLs', error);
+            }
+        }
+
+        function renderChart(dailyClicks) {
+            const labels = Object.keys(dailyClicks).map(date => {
+                const d = new Date(date);
+                return `${d.getMonth() + 1}/${d.getDate()}`;
+            });
+            const data = Object.values(dailyClicks);
+
+            const ctx = document.getElementById('clicksChart').getContext('2d');
+
+            if (clicksChart) clicksChart.destroy();
+
+            Chart.defaults.color = '#86868b';
+            Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Text', sans-serif";
+
+            const primaryColor = '#5e6ad2';
+
+            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(94, 106, 210, 0.4)');
+            gradient.addColorStop(1, 'rgba(94, 106, 210, 0.0)');
+
+            clicksChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Traffic Volume',
+                        data: data,
+                        borderColor: primaryColor,
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#000000',
+                        pointBorderColor: primaryColor,
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(28, 28, 30, 0.9)',
+                            titleColor: '#f5f5f7',
+                            bodyColor: '#86868b',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            titleFont: { size: 13, weight: '600' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            backdropFilter: 'blur(10px)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, maxTicksLimit: 6 },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)', borderDash: [4, 4] },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            border: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function copyURL(url) {
+            navigator.clipboard.writeText(url);
+        }
+
+
+
+        async function deleteURL(id) {
+            if (!confirm('Are you certain you want to revoke this URL?')) return;
+
+            try {
+                const response = await fetch(`/api/url/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    loadURLs();
+                    loadDashboard();
+                } else {
+                    alert('Provisioning error: Failed to revoke link.');
+                }
+            } catch (error) {
+                alert('Connection error.');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = '/login.html';
+        }
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>
