@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "public": true,
+  "name": "sniplink-frontend",
+  "builds": [
+    {
+      "src": "src/main/resources/static/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(css|js|images)/(.*)",
+      "dest": "/src/main/resources/static/$1/$2"
+    },
+    {
+      "src": "/(.*).html",
+      "dest": "/src/main/resources/static/$1.html"
+    },
+    {
+      "src": "/",
+      "dest": "/src/main/resources/static/index.html"
+    }
+  ]
+}
