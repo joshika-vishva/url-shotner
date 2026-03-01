@@ -8,8 +8,7 @@ RUN mvn clean package -DskipTests
 # Run stage
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-# Copy any jar found in target to app.jar
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-# Use shell form for CMD
-CMD java -jar app.jar
+# Explicit memory limits for Render free tier and shell path
+CMD ["sh", "-c", "java -Xmx300m -Xss512k -jar app.jar"]
