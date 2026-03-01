@@ -78,7 +78,7 @@ spring.datasource.username=your_username
 spring.datasource.password=your_password
 
 # Generate your own JWT secret (base64 encoded)
-jwt.secret=your_secure_secret_key
+jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
 jwt.expiration=86400000
 ```
 
