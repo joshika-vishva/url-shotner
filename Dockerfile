@@ -1,20 +1,13 @@
-FROM openjdk:17-jdk-slim
-
-# Set working directory
+# Build stage
+FROM maven:3.8.4-openjdk-17-slim AS build
 WORKDIR /app
-
-# Copy Maven files
 COPY pom.xml .
 COPY src ./src
-
-# Install Maven
-RUN apt-get update && apt-get install -y maven
-
-# Build application
 RUN mvn clean package -DskipTests
 
-# Expose port
+# Run stage
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY --from=build /app/target/sniplink-1.0.0.jar app.jar
 EXPOSE 8080
-
-# Run application
-CMD ["java", "-jar", "target/sniplink-1.0.0.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
